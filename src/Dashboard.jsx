@@ -111,7 +111,7 @@ export default function Dashboard() {
                     try {
                         const readingTime = new Date(reading.timestamp + (reading.timestamp.includes('T') ? '' : ' UTC'));
                         const diffMinutes = (new Date().getTime() - readingTime.getTime()) / 60000;
-                        if (diffMinutes <= 15) isOnline = true;
+                        if (diffMinutes <= 1) isOnline = true;
                     } catch (e) { console.warn("Date parse error", e); }
                 }
 
