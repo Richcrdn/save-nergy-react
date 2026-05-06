@@ -31,7 +31,7 @@ export default function HelpCenter() {
                                     </h2>
                                     <div id="collapseOne" className="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#faqAccordion">
                                         <div className="accordion-body text-muted">
-                                            The estimated cost is calculated by multiplying your total kilowatt-hours (kWh) consumption by the global electricity rate set by the Admin in the Settings page.
+                                        The estimated cost is automatically calculated by multiplying your accurate total kilowatt-hours (kWh) consumption by the standard average electricity rate (approx. ₱12.00/kWh). This ensures accurate and automated costing without needing manual configuration.
                                         </div>
                                     </div>
                                 </div>
