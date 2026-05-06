@@ -124,10 +124,10 @@ export default function Dashboard() {
                     key: roomKey,
                     room_name: device.locations?.name || 'Unknown',
                     status: isOnline ? 'Online' : 'Offline',
-                    power: reading ? Math.round(reading.power_watts) : 0,
-                    temperature: reading ? parseFloat(reading.temperature_celsius).toFixed(1) : 0,
+                    power: isOnline && reading ? Math.round(reading.power_watts) : 0,
+                    temperature: isOnline && reading ? parseFloat(reading.temperature_celsius).toFixed(1) : '--',
                     timestamp: reading ? reading.timestamp : null,
-                    isOverload: reading ? Math.round(reading.power_watts) > threshold : false
+                    isOverload: isOnline && reading ? Math.round(reading.power_watts) > threshold : false
                 };
             });
 
