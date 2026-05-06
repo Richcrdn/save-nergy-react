@@ -32,7 +32,14 @@ export default function History() {
                 const { data, error } = await supabase.rpc('get_historical_data', { p_period: period });
                 if (error) throw new Error(error.message);
 
-                if (data?.summary) setSummary(data.summary);
+                if (data?.summary) {
+                    // AUTOMATED ACCURATE COSTING
+                    // Standard average electricity rate sa Pilipinas (approx 12.00 PHP / kWh)
+                    const AUTOMATED_RATE = 12.00; 
+                    data.summary.h205.estimated_cost = data.summary.h205.total_kwh * AUTOMATED_RATE;
+                    data.summary.h208.estimated_cost = data.summary.h208.total_kwh * AUTOMATED_RATE;
+                    setSummary(data.summary);
+                }
                 if (data?.raw_chart) setRawData(data.raw_chart);
 
                 // I-format ang data para sa Chart.js
