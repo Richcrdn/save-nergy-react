@@ -12,17 +12,9 @@ export default function Admin() {
     const [usersError, setUsersError] = useState('');
     const [updatingUserId, setUpdatingUserId] = useState(null);
 
-    // Para sa Simulator
-    const [simulating, setSimulating] = useState(false);
-    const simIntervalRef = useRef(null);
-
     useEffect(() => {
         fetchSettings();
         fetchUsers();
-        
-        return () => {
-            if (simIntervalRef.current) clearInterval(simIntervalRef.current);
-        };
     }, []);
 
     const fetchUsers = async () => {
@@ -114,56 +106,8 @@ export default function Admin() {
         }
     };
 
-    const toggleSimulator = async () => {
-        if (simulating) {
-            clearInterval(simIntervalRef.current);
-            setSimulating(false);
-        } else {
-            const { data: devices, error } = await supabase.from('devices').select('id, name');
-            if (error || !devices || devices.length === 0) {
-                alert("No devices found in the database. Please make sure the 'devices' table is populated.");
-                return;
-            }
-            
-            // Kunin ang current threshold mula sa DB para alam ng simulator kung kailan mag-a-alert
-            const { data: set } = await supabase.from('settings').select('setting_value').eq('setting_key', 'max_power_threshold').single();
-            const currentThreshold = set ? parseInt(set.setting_value) : 2500;
-
-            setSimulating(true);
-            simIntervalRef.current = setInterval(async () => {
-                const newAlerts = [];
-                
-                const readings = devices.map(d => {
-                    const isSpike = Math.random() > 0.85; // 15% chance na mag-overload para sa demo
-                    const power = isSpike ? (Math.random() * 1000 + currentThreshold) : (Math.random() * 800 + 1000); 
-                    const temp = Math.random() * (26 - 18) + 18; // 18C to 26C
-                    
-                    if (power > currentThreshold) {
-                        newAlerts.push({
-                            type: 'overload',
-                            message: `Overload Alert: ${d.name} exceeded limit with ${Math.round(power)}W.`
-                        });
-                    }
-
-                    return {
-                        device_id: d.id,
-                        power_watts: power,
-                        temperature_celsius: temp
-                    };
-                });
-                
-                await supabase.from('sensor_readings').insert(readings);
-                
-                // I-save ang mga na-detect na alerts sa database
-                if (newAlerts.length > 0) {
-                    await supabase.from('alerts').insert(newAlerts);
-                }
-            }, 5000);
-        }
-    };
-
     const clearDemoData = async () => {
-        if (window.confirm("Are you sure you want to clear ALL sensor readings and system alerts? Use this to wipe fake demo data before connecting your real IoT devices.")) {
+        if (window.confirm("Are you sure you want to clear ALL sensor readings and system alerts? This action cannot be undone.")) {
             // Delete all records where device_id is not null (which targets all rows safely)
             const { error: sensorError } = await supabase.from('sensor_readings').delete().neq('power_watts', -1);
             // Delete all alerts safely
@@ -172,7 +116,7 @@ export default function Admin() {
             if (sensorError || alertError) {
                 alert("Failed to clear data: " + (sensorError?.message || alertError?.message));
             } else {
-                alert("Demo data and system alerts successfully cleared! Your database is now clean and ready for real hardware.");
+                alert("System data and alerts successfully cleared!");
             }
         }
     };
@@ -308,33 +252,26 @@ export default function Admin() {
                 </div>
             </div>
 
-            {/* Simulation Panel */}
+            {/* Data Management Panel */}
             <div className="row mt-4">
                 <div className="col-12">
-                    <div className="card border-0 shadow-sm" style={{ borderLeft: '4px solid #10b981' }}>
+                    <div className="card border-0 shadow-sm" style={{ borderLeft: '4px solid #dc3545' }}>
                         <div className="card-header bg-white py-3 border-0">
                             <h5 className="mb-0 fw-bold text-dark">
-                                <i className="bi bi-cpu me-2 text-success"></i>
-                                IoT Device Simulator (Demo Mode)
+                                <i className="bi bi-database-exclamation me-2 text-danger"></i>
+                                Data Management
                             </h5>
                         </div>
                         <div className="card-body p-4 d-flex justify-content-between align-items-center flex-wrap">
                             <div>
-                                <h6 className="fw-bold mb-1">Live Data Generator</h6>
+                                <h6 className="fw-bold mb-1">Clear System Data</h6>
                                 <p className="text-muted small mb-0">
-                                    Turn this on to generate realistic fake sensor data every 5 seconds. This will trigger the realtime dashboard charts and system alerts.
+                                    This will permanently delete all recorded sensor readings and system alerts from the database. Use with caution.
                                 </p>
                             </div>
                             <div className="d-flex gap-2 mt-3 mt-md-0">
-                                <button className="btn btn-outline-danger px-3" onClick={clearDemoData} disabled={simulating}>
-                                    <i className="bi bi-trash3-fill me-2"></i>Clear Data
-                                </button>
-                                <button className={`btn ${simulating ? 'btn-danger' : 'btn-success'} px-4`} onClick={toggleSimulator}>
-                                    {simulating ? (
-                                        <><span className="spinner-grow spinner-grow-sm me-2"></span>Stop Simulator</>
-                                    ) : (
-                                        <><i className="bi bi-play-circle me-2"></i>Start Simulator</>
-                                    )}
+                                <button className="btn btn-danger px-4" onClick={clearDemoData}>
+                                    <i className="bi bi-trash3-fill me-2"></i>Clear All Data
                                 </button>
                             </div>
                         </div>
