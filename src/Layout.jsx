@@ -140,7 +140,9 @@ export default function Layout({ session }) {
                                             <li><div className="text-center py-4 text-muted small">No recent notifications</div></li>
                                         )}
                                     </div>
-                                    <li><Link className="dropdown-item py-2 text-center text-primary small fw-bold" to="/history">View All History</Link></li>
+                                    {isAdmin && (
+                                        <li><Link className="dropdown-item py-2 text-center text-primary small fw-bold" to="/reports">View All Alerts</Link></li>
+                                    )}
                                 </ul>
                             </div>
 
