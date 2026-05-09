@@ -173,10 +173,24 @@ export default function Dashboard() {
                 recs.push({ id: 2, icon: 'bi-lightning-fill', color: 'text-warning', text: 'High Consumption: Try setting the thermostat to 24°C. Studies show this can save up to 10% on electricity.' });
             }
             
+            // Check if either AC is off (power = 0)
+            const h205Off = p205 === 0;
+            const h208Off = p208 === 0;
+            const bothOff = h205Off && h208Off;
+            const oneOff = h205Off !== h208Off;
+
             if (t205 > 26 || t208 > 26) {
                 recs.push({ id: 6, icon: 'bi-thermometer-sun', color: 'text-danger', text: 'Too Hot: Room temperature is above 26°C. Consider turning on the AC or lowering the thermostat to 24°C to cool down the room efficiently.' });
             } else if ((t205 > 0 && t205 <= 21) || (t208 > 0 && t208 <= 21)) {
                 recs.push({ id: 3, icon: 'bi-thermometer-snow', color: 'text-info', text: 'Too Cold: Room temperature is below 22°C. You can turn off the AC, switch to fan mode, or adjust it to 24°C to save energy and prevent freezing.' });
+            }
+            
+            // Add OFF status indication
+            if (bothOff) {
+                recs.push({ id: 7, icon: 'bi-power', color: 'text-secondary', text: 'Status: Both AC units are currently OFF. No power is being consumed. Rooms will gradually return to ambient temperature.' });
+            } else if (oneOff) {
+                const offRoom = h205Off ? 'H205' : 'H208';
+                recs.push({ id: 8, icon: 'bi-toggle-off', color: 'text-muted', text: `Status: AC in Room ${offRoom} is OFF with zero power consumption. Temperature may gradually increase without cooling.` });
             }
             
             if (recs.length === 0 && activeDevs > 0) {
@@ -308,9 +322,6 @@ export default function Dashboard() {
                                     <div id="clock-date">{date}</div>
                                 </div>
                             </div>
-                            <div className="d-flex align-items-center bg-body-secondary rounded-pill px-3 py-2">
-                                <span className="status-dot online"></span> <span className="text-body fw-bold small">System Live</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -430,6 +441,7 @@ export default function Dashboard() {
                                         <div className="d-flex align-items-center">
                                             <h5 className="mb-0 text-body me-2"><i className="bi bi-geo-alt-fill text-primary me-2"></i>Room {room.toUpperCase()}</h5>
                                             <span id={`peak-${room}`} className={`badge bg-danger animate-fade-in ${!rooms[room].isPeak ? 'd-none' : ''}`} style={{ fontSize: '0.65rem' }}><i className="bi bi-fire me-1"></i>Peak Usage</span>
+                                            <span className={`badge bg-secondary animate-fade-in ${rooms[room].power !== 0 ? 'd-none' : ''}`} style={{ fontSize: '0.65rem', marginLeft: '0.5rem' }}><i className="bi bi-power me-1"></i>OFF</span>
                                         </div>
                                         <div id={`status-${room}`} className="d-flex align-items-center">
                                             {renderStatus(rooms[room].status)}
@@ -441,9 +453,15 @@ export default function Dashboard() {
                                                 <div className="room-stat-box">
                                                     <i className="bi bi-lightning-charge-fill text-primary fs-2 mb-2"></i>
                                                     <h6 className="text-secondary small text-uppercase fw-bold mb-1">Power</h6>
-                                                    <div className={`fs-3 fw-bold ${rooms[room].isOverload ? 'text-danger' : 'text-body'}`}>
-                                                        <span id={`power-${room}`}>{rooms[room].power}</span> <small className="fs-6 text-secondary fw-normal">W</small>
-                                                    </div>
+                                                    {rooms[room].power === 0 ? (
+                                                        <div className="fs-3 fw-bold text-danger">
+                                                            <i className="bi bi-power me-1"></i>OFF
+                                                        </div>
+                                                    ) : (
+                                                        <div className={`fs-3 fw-bold ${rooms[room].isOverload ? 'text-danger' : 'text-body'}`}>
+                                                            <span id={`power-${room}`}>{rooms[room].power}</span> <small className="fs-6 text-secondary fw-normal">W</small>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="col-6">
